@@ -1,5 +1,7 @@
-#include "stdexcept"
-#include "format"
+#include <stdexcept>
+#include <format>
+#include <thread>
+#include <vector>
 
 #include "Fire.h"
 
@@ -25,26 +27,68 @@ DoomFire::~DoomFire()
     delete[] mFirePixels;
 }
 
-void DoomFire::Update()
+struct ThreadData
 {
-    for (int x = 0; x < mWidth; ++x)
+    int startX, endX;
+    int width, height;
+    uint32_t *firePixels;
+};
+
+int updateFire(void *data)
+{
+    ThreadData *threadData = static_cast<ThreadData *>(data);
+
+    int startX = threadData->startX;
+    int endX = threadData->endX;
+    int width = threadData->width;
+    int height = threadData->height;
+    uint32_t *firePixels = threadData->firePixels;
+
+    for (int x = startX; x < endX; ++x)
     {
-        for (int y = 1; y < mHeight; ++y)
+        for (int y = 1; y < height; ++y)
         {
-            int src = y * mWidth + x;
-            uint32_t pixel = mFirePixels[src];
+            int src = y * width + x;
+            uint32_t pixel = firePixels[src];
 
             if (pixel == 0)
             {
-                mFirePixels[src - mWidth] = 0;
+                firePixels[src - width] = 0;
             }
             else
             {
-
-                int randIdx = rand() % 3 & 3;
+                int randIdx = rand() % 3;
                 int dst = src - randIdx + 1;
-                mFirePixels[dst - mWidth] = pixel - (randIdx & 1);
+                firePixels[dst - width] = pixel - (randIdx & 1);
             }
+        }
+    }
+
+    return 0;
+}
+
+void DoomFire::Update()
+{
+    const uint threadCount = std::thread::hardware_concurrency();
+    int chunkSize = mWidth / threadCount;
+
+    std::vector<SDL_Thread *> threads(threadCount);
+    std::vector<ThreadData> threadDataList(threadCount);
+
+    for (int i = 0; i < threadCount; ++i)
+    {
+        int startX = chunkSize * i;
+        int endX = (i == threadCount - 1) ? mWidth : startX + chunkSize;
+
+        threadDataList[i] = {startX, endX, mWidth, mHeight, mFirePixels};
+        threads[i] = SDL_CreateThread(updateFire, "FireThread", &threadDataList[i]);
+    }
+
+    for (auto thread : threads)
+    {
+        if (thread)
+        {
+            SDL_WaitThread(thread, nullptr);
         }
     }
 }

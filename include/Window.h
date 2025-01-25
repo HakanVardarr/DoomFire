@@ -10,6 +10,7 @@ public:
     ~Window();
 
     SDL_Renderer *CreateRenderer() const;
+    SDL_Window *GetWindowHandle() const;
 
 private:
     SDL_Window *mSDL_Window = nullptr;

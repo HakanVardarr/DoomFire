@@ -1,5 +1,5 @@
-#include "stdexcept"
-#include "format"
+#include <stdexcept>
+#include <format>
 
 #include "Window.h"
 
@@ -27,4 +27,9 @@ SDL_Renderer *Window::CreateRenderer() const
         throw std::runtime_error(errorMessage);
     }
     return renderer;
+}
+
+SDL_Window *Window::GetWindowHandle() const
+{
+    return mSDL_Window;
 }

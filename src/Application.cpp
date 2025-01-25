@@ -1,6 +1,6 @@
-#include "stdexcept"
-#include "format"
-#include "iostream"
+#include <stdexcept>
+#include <format>
+#include <iostream>
 
 #include "Application.h"
 #include "Fire.h"
@@ -21,12 +21,16 @@ Application::~Application()
 
 void Application::Run()
 {
-    DoomFire fireTexture(mRenderer, WIDTH / 2, HEIGHT / 2);
+    DoomFire fireTexture(mRenderer, WIDTH / 3 * 2, HEIGHT / 3 * 2);
 
     SDL_Event event;
+    Uint32 frameStart;
+    Uint32 frameTime;
+
     while (mIsRunning)
     {
-        Uint32 frameStart = SDL_GetTicks();
+        frameStart = SDL_GetTicks();
+
         SDL_PollEvent(&event);
         if (event.type == SDL_EventType::SDL_EVENT_QUIT)
         {
@@ -41,7 +45,8 @@ void Application::Run()
         fireTexture.Render(mRenderer, &destRect);
 
         SDL_RenderPresent(mRenderer);
-        Uint32 frameTime = SDL_GetTicks() - frameStart;
+
+        frameTime = SDL_GetTicks() - frameStart;
         if (FRAME_DELAY > frameTime)
         {
             SDL_Delay(FRAME_DELAY - frameTime);
